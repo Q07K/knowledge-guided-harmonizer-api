@@ -1,0 +1,19 @@
+{
+    "recommendations": [
+        // Python 개발 필수 익스텐션
+        "ms-python.python",
+        "ms-python.pylint",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        // 코드 품질 및 분석
+        "njpwerner.autodocstring",
+        // 파일 형식 지원
+        "ms-python.vscode-pylance",
+        "redhat.vscode-yaml",
+        "ms-vscode.vscode-json",
+        // 개발 편의성
+        "ms-vscode.vscode-todo-highlight",
+        "streetsidesoftware.code-spell-checker",
+        "ms-vscode.remote-containers"
+    ]
+}
