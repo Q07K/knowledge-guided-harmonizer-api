@@ -1,7 +1,7 @@
 from typing import overload
 
 from langchain_core.messages import BaseMessage
-from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import BaseModel
 
 from app.core.config import get_settings
@@ -37,7 +37,7 @@ def generate[T: BaseModel](
         model=settings.model,
         temperature=settings.temperature,
         max_tokens=settings.max_tokens,
-        gemini_api_key=settings.gemini_api_key,
+        google_api_key=settings.gemini_api_key,
     )
 
     if structured_output:
