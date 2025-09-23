@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     # LLM 설정
     model: str = "gemini-2.5-flash"
-    temperature: float | None = None
+    temperature: float = 0.55
     max_tokens: int | None = None
 
     # Gemini API KEY
