@@ -1,4 +1,4 @@
-SQL_QUERY_ANALYSIS_PROMPT = """
+BASE_PROMPT = """
 <role>
 You are an expert database analyst and solution architect.
 </role>
