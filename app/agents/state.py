@@ -13,3 +13,4 @@ class OntologyAgentState(TypedDict):
     current_ontology: str
     check_list_items: InsightChecklistSchema
     analysis_stage: str  # e.g., "initial", "refined", "completed"
+    node_state: str  # 현재 노드 상태를 나타내는 문자열
