@@ -64,5 +64,14 @@
         "editor.defaultFormatter": "vscode.json-language-features"
     },
     // 디버그 툴바 위치
-    "debug.toolBarLocation": "commandCenter"
+    "debug.toolBarLocation": "commandCenter",
+    // GitHub Copilot 설정
+    "github.copilot.chat.commitMessageGeneration.instructions": [
+        {
+            "file": ".github/copilot-commit-message-instructions.md"
+        },
+        {
+            "text": "Use conventional commit message format."
+        }
+    ]
 }
