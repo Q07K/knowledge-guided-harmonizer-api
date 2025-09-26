@@ -24,14 +24,16 @@ class PriorityLevel(str, Enum):
 class InsightQuestion(BaseModel):
     """개별 인사이트 확장 질문"""
 
-    question: str = Field(description="사용자에게 직접 묻는 형태의 질문")
     question_type: QuestionType = Field(description="질문의 유형 분류")
     priority: PriorityLevel = Field(description="질문의 우선순위")
+    expected_question: str = Field(
+        description="사용자에게 직접 묻는 형태의 질문",
+    )
     expected_outcome: str = Field(
         description="예상되는 결과나 얻고자 하는 정보",
     )
-    expected_question: str = Field(
-        description="사용자에게 직접 묻는 형태의 질문",
+    compressed_context: str = Field(
+        description="질문에 대한 배경 지식이나 맥락 (압축된 형태 20자 이내)",
     )
 
 
