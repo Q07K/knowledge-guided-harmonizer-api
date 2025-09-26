@@ -61,7 +61,7 @@ class OntologyAgent:
 
         return workflow.compile()
 
-    def invoke(
+    def stream(
         self,
         sql_query: str,
     ) -> OntologyAgentState:
@@ -99,7 +99,10 @@ class OntologyAgent:
         ]
         response = generate(contexts=contexts)
 
-        return {"sql_query_analyzed": response.content}
+        return {
+            "sql_query_analyzed": response.content,
+            "node_state": "sql_query_analyzed",
+        }
 
     def ontology_schema_generate_node(self, state: OntologyAgentState):
         node_print("Ontology Schema Generation Node")
@@ -115,7 +118,10 @@ class OntologyAgent:
             contexts=context,
             structured_output=OntologyMetaModel,
         )
-        return {"current_ontology": response.model_dump_json()}
+        return {
+            "current_ontology": response.model_dump_json(),
+            "node_state": "current_ontology",
+        }
 
     def create_check_list_node(self, state: OntologyAgentState):
         node_print("Create Check List Node")
@@ -142,7 +148,10 @@ class OntologyAgent:
             contexts=contexts,
             structured_output=InsightChecklistSchema,
         )
-        return {"check_list_items": response}
+        return {
+            "check_list_items": response,
+            "node_state": "check_list_items",
+        }
 
     # def check_list_refinement_node(self, state: OntologyAgentState):
     #     pass
