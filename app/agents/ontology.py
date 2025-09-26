@@ -11,6 +11,7 @@ from app.agents.structured_outputs.insight_checklist import (
     InsightChecklistSchema,
 )
 from app.agents.structured_outputs.ontology_meta_model import OntologyMetaModel
+from app.utils.custom_print import node_print
 
 
 class OntologyAgent:
@@ -85,9 +86,11 @@ class OntologyAgent:
             analysis_stage="initial",
         )
 
-        return self.agent.invoke(state)
+        return self.agent.stream(state)
 
     def sql_query_analyze_node(self, state: OntologyAgentState):
+        node_print("SQL Query Analysis Node")
+
         sql_query = state["sql_query"]
 
         contexts = [
@@ -99,6 +102,8 @@ class OntologyAgent:
         return {"sql_query_analyzed": response.content}
 
     def ontology_schema_generate_node(self, state: OntologyAgentState):
+        node_print("Ontology Schema Generation Node")
+
         sql_query = state["sql_query"]
         sql_query_analyzed = state["sql_query_analyzed"]
 
@@ -113,6 +118,8 @@ class OntologyAgent:
         return {"current_ontology": response.model_dump_json()}
 
     def create_check_list_node(self, state: OntologyAgentState):
+        node_print("Create Check List Node")
+
         sql_query = state["sql_query"]
         sql_query_analyzed = state["sql_query_analyzed"]
         current_ontology = state["current_ontology"]
