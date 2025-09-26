@@ -47,13 +47,6 @@ Identify what additional information you need about:
 </information_gaps>
 
 <question_style>
-Ask direct questions to the user in Korean language such as:
-- "X와 Y 엔티티 간의 비즈니스 규칙은 무엇인가요?"
-- "고려해야 할 업계 표준이 있나요?"
-- "Z 엔티티에 중요한 추가 속성은 무엇인가요?"
-- "이 데이터는 얼마나 자주 조회될 예정인가요?"
-- "적용해야 할 검증 규칙은 무엇인가요?"
-
 All questions must be written in Korean language.
 </question_style>
 
