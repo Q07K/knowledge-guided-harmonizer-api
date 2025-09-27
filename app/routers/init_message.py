@@ -15,15 +15,24 @@ router = APIRouter(
 @router.post("")
 async def create_init_message(body: InitMessageRequest):
     async def generate():
-        print("Received SQL Query:", body.sql_query)
         agent = OntologyAgent()
-
         # 스트리밍 처리 예시
         chunk: dict
         for chunk in agent.stream(sql_query=body.sql_query):
             node_name = list(chunk.keys())[0]
             node_response = chunk[node_name]
             node_state = node_response.get("node_state", "in_progress")
+
+            # response_data = BaseResponse[InitMessageResponse](
+            #     state_code=200,
+            #     message="분석 시작...",
+            #     data=InitMessageResponse(
+            #         name=node_name,
+            #         state=node_state,
+            #         message="분석 시작...",
+            #     ),
+            # )
+            # yield f"data: {response_data.model_dump_json()}\n\n"
 
             response_data = BaseResponse[InitMessageResponse](
                 state_code=200,
