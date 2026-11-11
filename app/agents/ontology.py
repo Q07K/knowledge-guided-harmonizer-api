@@ -14,144 +14,108 @@ from app.agents.structured_outputs.ontology_meta_model import OntologyMetaModel
 from app.utils.custom_print import node_print
 
 
-class OntologyAgent:
-    """Ontology Agent 클래스"""
+def sql_query_analyze_node(state: OntologyAgentState):
+    node_print("SQL Query Analysis Node")
 
-    def __init__(self) -> None:
-        self.agent = self._build_graph(state_schema=OntologyAgentState)
+    sql_query = state["sql_query"]
 
-    def _build_graph(
-        self,
-        state_schema: OntologyAgentState,
-    ) -> CompiledStateGraph[Any, None, Any, Any]:
-        # Agent 초기화
-        workflow = StateGraph(state_schema=state_schema)
+    contexts = [
+        HumanMessage(content=sql_query_analysis.BASE_PROMPT),
+        HumanMessage(content=sql_query),
+    ]
+    response = generate(contexts=contexts)
 
-        # 노드 추가
-        workflow.add_node(
-            node="SQL Table Analysis",
-            action=self.sql_query_analyze_node,
-        )
-        workflow.add_node(
-            node="Ontology Schema Generation",
-            action=self.ontology_schema_generate_node,
-        )
-        workflow.add_node(
-            node="Create Check List",
-            action=self.create_check_list_node,
-        )
+    return {
+        "sql_query_analyzed": response.content,
+        "node_state": "sql_query_analyzed",
+    }
 
-        # 엣지 추가
-        workflow.add_edge(
-            start_key=START,
-            end_key="SQL Table Analysis",
-        )
-        workflow.add_edge(
-            start_key="SQL Table Analysis",
-            end_key="Ontology Schema Generation",
-        )
-        workflow.add_edge(
-            start_key="Ontology Schema Generation",
-            end_key="Create Check List",
-        )
-        workflow.add_edge(
-            start_key="Create Check List",
-            end_key=END,
-        )
 
-        return workflow.compile()
+def ontology_schema_generate_node(state: OntologyAgentState):
+    node_print("Ontology Schema Generation Node")
 
-    def stream(
-        self,
-        sql_query: str,
-    ) -> OntologyAgentState:
-        """Ontology Agent의 응답을 생성하는 메서드
+    sql_query = state["sql_query"]
+    sql_query_analyzed = state["sql_query_analyzed"]
 
-        Parameters
-        ----------
-        initial_state : OntologyAgentState
-            초기 상태
+    context = [
+        HumanMessage(content=sql_query),
+        HumanMessage(content=sql_query_analyzed),
+    ]
+    response: OntologyMetaModel = generate(
+        contexts=context,
+        structured_output=OntologyMetaModel,
+    )
+    return {
+        "current_ontology": response.model_dump_json(),
+        "node_state": "current_ontology",
+    }
 
-        Returns
-        -------
-        OntologyAgentState
-            최종 상태
-        """
 
-        state = OntologyAgentState(
-            sql_query=sql_query,
-            sql_query_analyzed="",
-            current_ontology={},
-            check_list_items=[],
-            analysis_stage="initial",
-        )
+def create_check_list_node(state: OntologyAgentState):
+    node_print("Create Check List Node")
 
-        return self.agent.stream(state)
+    sql_query = state["sql_query"]
+    sql_query_analyzed = state["sql_query_analyzed"]
+    current_ontology = state["current_ontology"]
 
-    def sql_query_analyze_node(self, state: OntologyAgentState):
-        node_print("SQL Query Analysis Node")
+    sql_query_prompt = "<SQL_QUERY>\n" + sql_query + "\n</SQL_QUERY>"
+    sql_analysis_prompt = (
+        "<SQL_ANALYSIS>\n" + sql_query_analyzed + "\n</SQL_ANALYSIS>"
+    )
+    current_ontology_prompt = (
+        "<CURRENT_ONTOLOGY>\n" + current_ontology + "\n</CURRENT_ONTOLOGY>"
+    )
 
-        sql_query = state["sql_query"]
+    contexts = [
+        HumanMessage(content=insight_checklist.PROMPT),
+        HumanMessage(content=sql_query_prompt),
+        HumanMessage(content=sql_analysis_prompt),
+        HumanMessage(content=current_ontology_prompt),
+    ]
+    response: InsightChecklistSchema = generate(
+        contexts=contexts,
+        structured_output=InsightChecklistSchema,
+    )
+    return {
+        "check_list_items": response,
+        "node_state": "check_list_items",
+    }
 
-        contexts = [
-            HumanMessage(content=sql_query_analysis.BASE_PROMPT),
-            HumanMessage(content=sql_query),
-        ]
-        response = generate(contexts=contexts)
 
-        return {
-            "sql_query_analyzed": response.content,
-            "node_state": "sql_query_analyzed",
-        }
+# def check_list_refinement_node(state: OntologyAgentState):
+#     pass
 
-    def ontology_schema_generate_node(self, state: OntologyAgentState):
-        node_print("Ontology Schema Generation Node")
 
-        sql_query = state["sql_query"]
-        sql_query_analyzed = state["sql_query_analyzed"]
+# 순차 실행되는 노드 정의 - 그래프 구성과 진행 상황 안내의 단일 기준
+NODES: tuple[tuple[str, Any], ...] = (
+    ("SQL Table Analysis", sql_query_analyze_node),
+    ("Ontology Schema Generation", ontology_schema_generate_node),
+    ("Create Check List", create_check_list_node),
+)
 
-        context = [
-            HumanMessage(content=sql_query),
-            HumanMessage(content=sql_query_analyzed),
-        ]
-        response: OntologyMetaModel = generate(
-            contexts=context,
-            structured_output=OntologyMetaModel,
-        )
-        return {
-            "current_ontology": response.model_dump_json(),
-            "node_state": "current_ontology",
-        }
+# 진행 순서대로 나열된 노드 이름
+NODE_SEQUENCE: tuple[str, ...] = tuple(name for name, _ in NODES)
 
-    def create_check_list_node(self, state: OntologyAgentState):
-        node_print("Create Check List Node")
 
-        sql_query = state["sql_query"]
-        sql_query_analyzed = state["sql_query_analyzed"]
-        current_ontology = state["current_ontology"]
+def _build_graph(
+    state_schema: OntologyAgentState,
+) -> CompiledStateGraph[Any, None, Any, Any]:
+    # Agent 초기화
+    workflow = StateGraph(state_schema=state_schema)
 
-        sql_query_prompt = "<SQL_QUERY>\n" + sql_query + "\n</SQL_QUERY>"
-        sql_analysis_prompt = (
-            "<SQL_ANALYSIS>\n" + sql_query_analyzed + "\n</SQL_ANALYSIS>"
-        )
-        current_ontology_prompt = (
-            "<CURRENT_ONTOLOGY>\n" + current_ontology + "\n</CURRENT_ONTOLOGY>"
-        )
+    # 노드 추가
+    for node_name, action in NODES:
+        workflow.add_node(node=node_name, action=action)
 
-        contexts = [
-            HumanMessage(content=insight_checklist.BASE_PROMPT),
-            HumanMessage(content=sql_query_prompt),
-            HumanMessage(content=sql_analysis_prompt),
-            HumanMessage(content=current_ontology_prompt),
-        ]
-        response: InsightChecklistSchema = generate(
-            contexts=contexts,
-            structured_output=InsightChecklistSchema,
-        )
-        return {
-            "check_list_items": response,
-            "node_state": "check_list_items",
-        }
+    # 엣지 추가 - START -> 노드들을 순서대로 연결 -> END
+    previous_key = START
+    for node_name in NODE_SEQUENCE:
+        workflow.add_edge(start_key=previous_key, end_key=node_name)
+        previous_key = node_name
 
-    # def check_list_refinement_node(self, state: OntologyAgentState):
-    #     pass
+    workflow.add_edge(start_key=previous_key, end_key=END)
+
+    return workflow.compile()
+
+
+agent = _build_graph(state_schema=OntologyAgentState)
